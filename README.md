@@ -27,7 +27,7 @@ A Telegram bot that monitors wallet addresses across multiple blockchains (Ether
 1. Clone the repository:
 ```bash
 git clone https://github.com/naratech-eng/wallet-tracker.git
-cd addy-tracker-bot
+cd wallet-tracker
 ```
 
 2. Install dependencies:
