@@ -8,7 +8,7 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 # EVM Chain RPC URLs
-ETH_RPC_URL = os.getenv('ETH_RPC_URL', 'https://eth-mainnet.g.alchemy.com/v2/your-api-key')
+ETH_RPC_URL = os.getenv('ETH_RPC_URL', 'https://eth.meowrpc.com')
 BASE_RPC_URL = os.getenv('BASE_RPC_URL', 'https://mainnet.base.org')
 ARB_RPC_URL = os.getenv('ARB_RPC_URL', 'https://arb1.arbitrum.io/rpc')
 BSC_RPC_URL = os.getenv('BSC_RPC_URL', 'https://bsc-dataseed.binance.org')

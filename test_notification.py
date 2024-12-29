@@ -15,7 +15,7 @@ async def send_test_message():
     async with bot:
         await bot.bot.send_message(
             chat_id=TELEGRAM_CHAT_ID,
-            text="🔔 Test Notification!\n\nYour wallet tracker bot is working correctly.\n\nTracking addresses:\n- Solana: 2brzD1rU8m71zf23bfgtw3vn9pqZG2CDxYU3nQ5pPizN\n- ETH: 0x03a101901bafa5d179ada227b3fc2c3cec4ce000",
+            text="[#1] Test Notification!\n\nYour wallet tracker bot is working correctly.\n\nTracking addresses:\n- Solana: 2abc\n- ETH: 0x0123...",
             parse_mode='HTML'
         )
         print("Test message sent!")

@@ -20,13 +20,16 @@ from web3.middleware import geth_poa_middleware
 
 
 # Initialize Web3 connections for each chain
+
+#UNCOMMENT FOR OTHER CHAINS (Solana is always enabled)
+
 web3_connections = {
     'eth': Web3(Web3.HTTPProvider(ETH_RPC_URL)),
-    'base': Web3(Web3.HTTPProvider(BASE_RPC_URL)),
-    'arbitrum': Web3(Web3.HTTPProvider(ARB_RPC_URL)),
-    'bsc': Web3(Web3.HTTPProvider(BSC_RPC_URL)),
-    'polygon': Web3(Web3.HTTPProvider(POLYGON_RPC_URL)),
-    'avalanche': Web3(Web3.HTTPProvider(AVAX_RPC_URL))
+    #'base': Web3(Web3.HTTPProvider(BASE_RPC_URL)),
+    #'arbitrum': Web3(Web3.HTTPProvider(ARB_RPC_URL)),
+    #'bsc': Web3(Web3.HTTPProvider(BSC_RPC_URL)),
+    #'polygon': Web3(Web3.HTTPProvider(POLYGON_RPC_URL)),
+    #'avalanche': Web3(Web3.HTTPProvider(AVAX_RPC_URL))
 }
 
 # Chain Explorer URLs
@@ -160,7 +163,6 @@ async def monitor_solana_wallet(wallet_address, label):
                         if 'meta' in tx_data['result'] and 'postTokenBalances' in tx_data['result']['meta']:
                             post_balances = tx_data['result']['meta']['postTokenBalances']
                             pre_balances = tx_data['result']['meta']['preTokenBalances']
-                            print("Token purchase detected")
                             # Check for new tokens
                             for post_balance in post_balances:
                                 if not any(pre['mint'] == post_balance['mint'] for pre in pre_balances):
@@ -213,7 +215,7 @@ async def monitor_evm_wallet(wallet_address, label):
                             w3.middleware_onion.inject(geth_poa_middleware, layer=0)
                             
                         block = w3.eth.get_block(block_number, full_transactions=True)
-                        
+                        print("CHECKING EVM, Block Number:: ", current_block)
                         for tx in block.transactions:
                             if isinstance(tx, dict) and tx['from'].lower() == wallet_address.lower():
                                 # Check if this is a token swap/purchase
