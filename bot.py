@@ -169,7 +169,7 @@ async def monitor_solana_wallet(wallet_address, label):
                                     # Get token info from Jupiter API
                                     jupiter_url = f"https://api.jup.ag/price/v2?ids={token_mint}"
                                     token_info = requests.get(jupiter_url)
-                                    print("CHECKING PRICE ON JUP", token_info.text)
+                                    print("CHECKING PRICE ON JUP ", token_info.text)
                                     token_info = token_info.json()
                                     
                                     if 'data' in token_info and token_mint in token_info['data']:
