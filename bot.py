@@ -15,13 +15,22 @@ from config import (
 import time
 import os
 import dotenv
+from telegrammanage import load_blacklist
 
 from web3.middleware import geth_poa_middleware
 
 last_block = {}
 lock = asyncio.Lock()
 
-processed_tokens = set()  # Set to track processed tokens
+
+dotenv.load_dotenv()
+
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+
+BLACKLIST_FILE = "blacklist.json"
+
+processed_tx = set()  # Set to track processed tokens
 
 # Initialize Web3 connections for each chain
 
@@ -98,11 +107,6 @@ async def load_wallet_addresses():
     except FileNotFoundError:
         return {}
 
-dotenv.load_dotenv()
-
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-
 
 bot = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
@@ -142,13 +146,13 @@ async def send_get_request(url):
             return await response.json()
 
 
-def is_token_processed(token_mint, wallet_address):
-    token = (token_mint, wallet_address)  # Create a tuple of the token
-    if token in processed_tokens:
-        return True  # Token is already processed
+def is_token_processed(tx, wallet_address):
+    transaction = (tx, wallet_address)
+    if transaction in processed_tx:
+        return True
     else:
-        processed_tokens.add(token)  # Add the token to the set
-        return False  # Token is not yet processed
+        processed_tx.add(transaction)
+        return False
 
 
 async def monitor_solana_wallet(wallet_address, label):
@@ -201,11 +205,13 @@ async def monitor_solana_wallet(wallet_address, label):
                         pre_balances = tx_data['result']['meta']['preTokenBalances']
                         # Check for new tokens
                         for post_balance in post_balances:
-                            if any(pre['mint'] == post_balance['mint'] for pre in pre_balances):
+                            if any(pre['mint'] == post_balance['mint'] and pre['owner'] != post_balance['owner'] for pre in pre_balances):
                                 token_mint = post_balance['mint']
 
-                                if is_token_processed(token_mint, wallet_address) == False:
-                                    print("WTF A NEW TOKKENNNNNNNNNN")
+                                blackList = load_blacklist()
+
+                                if is_token_processed(latest_signature, wallet_address) == False and token_mint not in blackList['blacklistMint']:
+                                    print("WTF A NEW TRANSACTIONNNNN")
                                     
                                     # Get token info from Jupiter API
                                     jupiter_url = f"https://api.jup.ag/price/v2?ids={token_mint}"
@@ -216,7 +222,8 @@ async def monitor_solana_wallet(wallet_address, label):
                                         token_data = token_info['data'][token_mint]
                                         message = (
                                             f" New Token Purchase on Solana by {label}!\n\n"
-                                            f"Token Address: {token_mint}\n"
+                                            f"Holding Address: {wallet_address}\n"
+                                            f"Token Address: [{token_mint}]\n"
                                             f"Price: ${token_data['price']}\n"
                                             f"Chart: https://dexscreener.com/solana/{token_mint}\n"
                                             f"Transaction: https://solscan.io/tx/{latest_signature}"
@@ -262,8 +269,9 @@ async def monitor_evm_wallet(wallet_address, label):
                                     
                                     message = (
                                         f" New Token Purchase on {chain.upper()} by {label}!\n\n"
+                                        f"Holding Address: {wallet_address}\n"
                                         f"Token: {symbol}\n"
-                                        f"Contract: {token_address}\n"
+                                        f"Contract: [{token_address}]\n"
                                         f"Chart: {DEXSCREENER_URLS[chain]}/{token_address}\n"
                                         f"Transaction: {EXPLORERS[chain]}/tx/{tx['hash'].hex()}"
                                     )
@@ -279,7 +287,6 @@ async def monitor_evm_wallet(wallet_address, label):
         except Exception as e:
             print(f"Error monitoring {chain} wallet {wallet_address}: {str(e)}")
     await asyncio.sleep(5)
-
 
 
 async def main():
@@ -303,7 +310,3 @@ async def monitor_wallet(address, label):
     
     # Delay 10 seconds before checking the next transaction for this wallet
     await asyncio.sleep(10)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
