@@ -14,6 +14,10 @@ from config import (
     AVAX_RPC_URL,
     SOL_RPC_URL
 )
+import time
+
+from web3.middleware import geth_poa_middleware
+
 
 # Initialize Web3 connections for each chain
 web3_connections = {
@@ -126,8 +130,11 @@ async def monitor_solana_wallet(wallet_address, label):
                     {"limit": 5}
                 ]
             }
+            time.sleep(5)
             response = requests.post(url, json=payload)
-            data = response.json()
+            data = response.json()                
+            print("Checking address: ", wallet_address)
+            print("Checking response: ", response.text)
             
             if 'result' in data and data['result']:
                 latest_signature = data['result'][0]['signature']
@@ -143,23 +150,27 @@ async def monitor_solana_wallet(wallet_address, label):
                             {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}
                         ]
                     }
+                    time.sleep(4)
                     tx_response = requests.post(url, json=tx_payload)
                     tx_data = tx_response.json()
+                    print("Checking tx: ", tx_response.text)
                     
                     if 'result' in tx_data and tx_data['result']:
                         # Check if it's a token purchase
                         if 'meta' in tx_data['result'] and 'postTokenBalances' in tx_data['result']['meta']:
                             post_balances = tx_data['result']['meta']['postTokenBalances']
                             pre_balances = tx_data['result']['meta']['preTokenBalances']
-                            
+                            print("Token purchase detected")
                             # Check for new tokens
                             for post_balance in post_balances:
                                 if not any(pre['mint'] == post_balance['mint'] for pre in pre_balances):
                                     token_mint = post_balance['mint']
                                     
                                     # Get token info from Jupiter API
-                                    jupiter_url = f"https://price.jup.ag/v4/price?ids={token_mint}"
-                                    token_info = requests.get(jupiter_url).json()
+                                    jupiter_url = f"https://api.jup.ag/price/v2?ids={token_mint}"
+                                    token_info = requests.get(jupiter_url)
+                                    print("CHECKING PRICE ON JUP", token_info.text)
+                                    token_info = token_info.json()
                                     
                                     if 'data' in token_info and token_mint in token_info['data']:
                                         token_data = token_info['data'][token_mint]
@@ -177,9 +188,8 @@ async def monitor_solana_wallet(wallet_address, label):
                 
         except Exception as e:
             print(f"Error monitoring Solana wallet {wallet_address}: {str(e)}")
-        
-        await asyncio.sleep(5)
 
+        await asyncio.sleep(5)
 async def monitor_evm_wallet(wallet_address, label):
     """Monitor an EVM wallet across multiple chains for token purchases"""
     last_block = {}
@@ -199,6 +209,9 @@ async def monitor_evm_wallet(wallet_address, label):
                 if current_block > last_block[chain]:
                     # Get new blocks
                     for block_number in range(last_block[chain] + 1, current_block + 1):
+                        if geth_poa_middleware not in w3.middleware_onion:
+                            w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+                            
                         block = w3.eth.get_block(block_number, full_transactions=True)
                         
                         for tx in block.transactions:
@@ -226,9 +239,7 @@ async def monitor_evm_wallet(wallet_address, label):
                     
             except Exception as e:
                 print(f"Error monitoring {chain} wallet {wallet_address}: {str(e)}")
-            
         await asyncio.sleep(5)
-
 async def main():
     """Main function to start monitoring all wallets"""
     wallets = await load_wallet_addresses()
