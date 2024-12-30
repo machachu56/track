@@ -3,7 +3,9 @@ import asyncio
 from telegram.ext import Application
 from web3 import Web3
 import aiohttp
-from config import ( 
+from config import (
+    TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_ID,
     ETH_RPC_URL, 
     BASE_RPC_URL,
     ARB_RPC_URL,
@@ -12,31 +14,19 @@ from config import (
     AVAX_RPC_URL,
     SOL_RPC_URL
 )
-import time
-import os
-import dotenv
 from telegrammanage import load_blacklist
 
 from web3.middleware import geth_poa_middleware
 
+BLACKLIST_FILE = "blacklist.json"
+
 last_block = {}
 lock = asyncio.Lock()
-
-
-dotenv.load_dotenv()
-
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-
-BLACKLIST_FILE = "blacklist.json"
 
 processed_tx = set()  # Set to track processed tokens
 
 # Initialize Web3 connections for each chain
-
-#UNCOMMENT FOR OTHER CHAINS (Solana is always enabled)
-
-web3_connections = {
+web3_connections = { # [[UNCOMMENT FOR OTHER CHAINS (Solana is always enabled)]]
     'eth': Web3(Web3.HTTPProvider(ETH_RPC_URL)),
     #'base': Web3(Web3.HTTPProvider(BASE_RPC_URL)),
     #'arbitrum': Web3(Web3.HTTPProvider(ARB_RPC_URL)),
@@ -112,7 +102,6 @@ bot = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 async def send_telegram_message(message):
     """Send message to Telegram channel"""
-    print("SENDING TELEGRAM MESSAGE")
     #await test_notification.send_test_message()
     async with bot:
         await bot.bot.send_message(
@@ -120,6 +109,8 @@ async def send_telegram_message(message):
             text=message,
             parse_mode='HTML',
             disable_web_page_preview=True)
+    
+    print("Telegram message sent successfully!")
 
 def get_token_info(w3, token_address):
     """Get token information from contract"""
@@ -133,9 +124,9 @@ def get_token_info(w3, token_address):
         return "UNKNOWN", 18
 
 
-async def send_request(url, jsonxd):
+async def send_post_request(url, jsonPayload):
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=jsonxd) as response:
+        async with session.post(url, json=jsonPayload) as response:
             # Wait for the response and ensure it's returned as JSON
             return await response.json()
         
@@ -171,9 +162,9 @@ async def monitor_solana_wallet(wallet_address, label):
                 {"limit": 5}
             ]
         }
-        #era time
+        
         await asyncio.sleep(5)
-        response = await send_request(url, jsonxd=payload)
+        response = await send_post_request(url, jsonPayload=payload)
         data = response                
         print("Checking address: ", wallet_address)
         print("Checking response: ", json.dumps(response))
@@ -192,9 +183,8 @@ async def monitor_solana_wallet(wallet_address, label):
                         {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}
                     ]
                 }
-                # era time
                 await asyncio.sleep(4)
-                tx_response = await send_request(url, jsonxd=tx_payload)
+                tx_response = await send_post_request(url, jsonPayload=tx_payload)
                 tx_data = tx_response
                 print("Checking tx: ", json.dumps(tx_response))
                 
@@ -207,16 +197,17 @@ async def monitor_solana_wallet(wallet_address, label):
                         for post_balance in post_balances:
                             if any(pre['mint'] == post_balance['mint'] and pre['owner'] != post_balance['owner'] for pre in pre_balances):
                                 token_mint = post_balance['mint']
-
+                                
+                                # Load blacklist - runs in the loop every time to keep checking for changes in the file
                                 blackList = load_blacklist()
 
                                 if is_token_processed(latest_signature, wallet_address) == False and token_mint not in blackList['blacklistMint']:
-                                    print("WTF A NEW TRANSACTIONNNNN")
+                                    print("New transaction detected, proceeding...")
                                     
                                     # Get token info from Jupiter API
                                     jupiter_url = f"https://api.jup.ag/price/v2?ids={token_mint}"
                                     token_info = await send_get_request(jupiter_url)
-                                    print("CHECKING PRICE ON JUP ", json.dumps(token_info))
+                                    print("Checking information of token on Jupyter:\n", json.dumps(token_info))
                                     
                                     if 'data' in token_info and token_mint in token_info['data']:
                                         token_data = token_info['data'][token_mint]
