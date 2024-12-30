@@ -1,6 +1,6 @@
 Versió en català del README aqui.
 
-[CATALÀ](https://github.com/machachu56/track/blob/main/README_CAT.md)
+[CATALÀ](https://github.com/machachu56/track/blob/naratech/README_CAT.md)
 
 English:
 
@@ -15,7 +15,7 @@ English:
     - /rmblacklist TOKEN_ADDR
   - Lists blacklisted tokens:
     - /lsblacklist
-    
+
 **THESE COMMANDS CAN ONLY BE USED WHILE SENDING A DIRECT MESSAGE TO THE BOT - THEY CANNOT BE USED IN THE GROUP CHAT**
 
 ## Installation
