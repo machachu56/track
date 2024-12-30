@@ -1,4 +1,51 @@
-# Wallet Tracker Bot
+Versió en català del README aqui.
+
+[CATALÀ](https://github.com/machachu56/track/blob/main/README_CAT.md)
+
+English:
+
+# Modifications of this fork
+
+- Fixed endpoints (SOL price check, ETH RPC) Others are not tested
+- Avoids Ratelimit to public RPC (Solana)
+- Added commands:
+  - Blacklist a token:
+    - /blacklist TOKEN_ADDR
+  - Removes a token from blacklist:
+    - /rmblacklist TOKEN_ADDR
+  - Lists blacklisted tokens:
+    - /lsblacklist
+**THESE COMMANDS CAN ONLY BE USED WHILE SENDING A DIRECT MESSAGE TO THE BOT - THEY CANNOT BE USED IN THE GROUP CHAT**
+
+## Installation
+To run:
+1. Install requirements
+```bash
+pip install -r requirements.txt
+```
+2. Rename `.env.example` to `.env`, put your Telegram token and chat id there.
+3. Rename wallets.json.example to wallets.json, add the wallets to track like this:
+```json
+{
+    "Wallet Name 1": "0x123...",  # EVM address - Program will categorize addresses automatically.
+    "Wallet Name 2": "ABC..."     # Solana address - Program will categorize addresses automatically.
+}
+```
+4. (Optional) - Add custom RPC URLs for production use, they can be edited in `config.py`
+5. Run the program:
+```bash
+python main.py
+```
+
+## Test Telegram Notifications
+Test if the notifications are working by executing:
+```bash
+python test_notification.py
+```
+
+# OLD README:
+
+## Wallet Tracker Bot
 
 A Telegram bot that monitors wallet addresses across multiple blockchains (Ethereum, Base, Arbitrum, BSC, Polygon, Avalanche, and Solana) and sends notifications when tokens are purchased.
 
@@ -21,109 +68,6 @@ A Telegram bot that monitors wallet addresses across multiple blockchains (Ether
 - Linux system with systemd
 - Telegram Bot Token (from @BotFather)
 - (Optional) RPC URLs for better performance
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/naratech-eng/wallet-tracker.git
-cd wallet-tracker
-```
-
-2. Install dependencies:
-```bash
-pip3 install -r requirements.txt
-```
-
-3. Create and configure environment variables:
-```bash
-cp .env.example .env
-```
-Edit `.env` with your:
-- Telegram Bot Token
-- Telegram Chat ID
-- RPC URLs (optional)
-
-4. Configure wallet addresses:
-```bash
-cp wallets.json.example wallets.json
-```
-Edit `wallets.json` with your wallet addresses:
-```json
-{
-    "Wallet Name 1": "0x123...",  # EVM address
-    "Wallet Name 2": "ABC..."     # Solana address
-}
-```
-
-5. Set up the service:
-```bash
-sudo cp wallet-tracker.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable wallet-tracker.service
-sudo systemctl start wallet-tracker.service
-```
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file with:
-```env
-# Telegram Bot Configuration
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-TELEGRAM_CHAT_ID=your_telegram_chat_id_here
-
-# EVM Chain RPC URLs (optional, defaults to public endpoints)
-ETH_RPC_URL=your_ethereum_rpc_url
-BASE_RPC_URL=your_base_rpc_url
-ARB_RPC_URL=your_arbitrum_rpc_url
-BSC_RPC_URL=your_bsc_rpc_url
-POLYGON_RPC_URL=your_polygon_rpc_url
-AVAX_RPC_URL=your_avalanche_rpc_url
-
-# Solana RPC URL (optional)
-SOL_RPC_URL=your_solana_rpc_url
-```
-
-### Wallet Configuration
-
-Edit `wallets.json`:
-```json
-{
-    "Wallet Label": "address",
-    "My ETH Wallet": "0x123abc...",
-    "My SOL Wallet": "ABC123..."
-}
-```
-
-## Usage
-
-The bot will automatically:
-1. Monitor configured wallets
-2. Detect token purchases
-3. Send Telegram notifications with:
-   - Token information
-   - Chart links
-   - Transaction details
-
-### Service Management
-
-```bash
-# Check status
-sudo systemctl status wallet-tracker.service
-
-# View logs
-sudo journalctl -u wallet-tracker.service -f
-
-# Restart bot
-sudo systemctl restart wallet-tracker.service
-
-# Stop bot
-sudo systemctl stop wallet-tracker.service
-```
-
-## Sample Notifications
 
 ### EVM Chain Purchase
 ```
