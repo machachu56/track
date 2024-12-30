@@ -47,3 +47,4 @@ wallets.json
 *.service
 other.txt
 test.py
+blacklist.json
